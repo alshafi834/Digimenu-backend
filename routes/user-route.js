@@ -28,7 +28,11 @@ router.delete("/deletefood/:id", userController.deleteFood);
 //-------------------------------------
 router.post("/browse/:restid", userController.getFoodMenu);
 router.get("/orders/:userid", userController.getMyOrders);
+router.get("/completedorders/:userid", userController.getMyCompletedOrders);
 router.post("/createorder", userController.createOrder);
+
+router.post("/covidentry", userController.storeCovidData);
+router.post("/reportcovid", userController.reportCovid);
 
 router.use(checkAuth);
 

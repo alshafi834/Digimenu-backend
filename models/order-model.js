@@ -16,6 +16,7 @@ const orderShcema = new Schema({
   totalprice: { type: Number, required: true },
   creator: { type: mongoose.Types.ObjectId, required: true, ref: "User" },
   createdfor: { type: mongoose.Types.ObjectId, required: true },
+  orderdate: { type: Date, required: true },
   status: {
     type: Number,
     enum: [0, 1, 2, 3],

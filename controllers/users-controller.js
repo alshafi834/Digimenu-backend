@@ -6,6 +6,8 @@ const jwt = require("jsonwebtoken");
 const Customer = require("../models/customer-model");
 const User = require("../models/users-model");
 const Order = require("../models/order-model");
+const Covid = require("../models/covidentry-model");
+const Covidcase = require("../models/covidcase-model");
 
 //Get the userlist
 const getUsers = async (req, res, next) => {
@@ -284,7 +286,7 @@ const editCustProfileInfo = async (req, res, next) => {
     }
   }
 
-  res.status(201).json({ msg: "Restaurant Info Updated Successfully!" });
+  res.status(201).json({ msg: "Profile Info Updated Successfully!" });
 };
 
 const deleteCategory = async (req, res, next) => {
@@ -361,7 +363,7 @@ const createOrder = async (req, res, next) => {
     );
   }
 
-  const { fooditem, totalprice, userID, restId } = req.body;
+  const { fooditem, totalprice, userID, restId, orderDate } = req.body;
 
   /* let isUserExist;
   try {
@@ -384,6 +386,7 @@ const createOrder = async (req, res, next) => {
     totalprice: totalprice,
     creator: userID,
     createdfor: restId,
+    orderdate: orderDate,
     status: 0,
   });
   console.log("here is the created order", createdOrder);
@@ -404,6 +407,22 @@ const getMyOrders = async (req, res, next) => {
   try {
     userOrders = await Order.find({
       $and: [{ creator: userId }, { status: { $ne: 3 } }],
+    }).sort([["orderdate", -1]]);
+    //userOrders = await Order.find({ creator: userId });
+  } catch (error) {
+    const err = new HttpError("Could not find the user with this email", 500);
+    return next(err);
+  }
+  res.json(userOrders);
+};
+
+const getMyCompletedOrders = async (req, res, next) => {
+  const userId = req.params.userid;
+  let userOrders;
+
+  try {
+    userOrders = await Order.find({
+      $and: [{ creator: userId }, { status: { $eq: 3 } }],
     });
     //userOrders = await Order.find({ creator: userId });
   } catch (error) {
@@ -411,6 +430,64 @@ const getMyOrders = async (req, res, next) => {
     return next(err);
   }
   res.json(userOrders);
+};
+
+const storeCovidData = async (req, res, next) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    return next(
+      new HttpError("Invalid input passed, please check your data", 422)
+    );
+  }
+
+  const { name, email, phone, userid, restid, entrytime, leavingtime } =
+    req.body;
+
+  const createdEntry = new Covid({
+    name: name,
+    email: email,
+    phone: phone,
+    userid: userid,
+    restid: restid,
+    entrytime: entrytime,
+    leavingtime: leavingtime,
+  });
+  console.log("here is the created order", createdEntry);
+  try {
+    await createdEntry.save();
+  } catch (error) {
+    const err = new HttpError("Order creation failed, please try again", 500);
+    return next(err);
+  }
+
+  res.status(201).json(createdEntry);
+};
+
+const reportCovid = async (req, res, next) => {
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    return next(
+      new HttpError("Invalid input passed, please check your data", 422)
+    );
+  }
+
+  const { date, userID } = req.body;
+
+  const createdCase = new Covidcase({
+    date: date,
+    userid: userID,
+  });
+
+  try {
+    await createdCase.save();
+  } catch (error) {
+    const err = new HttpError("Order creation failed, please try again", 500);
+    return next(err);
+  }
+
+  res.status(201).json({
+    msg: "We are really sorry that you tested positive for COVID-19. Thanks for reporting the COVID case! We will notify others who are at the risk of getting virus!",
+  });
 };
 
 exports.getUsers = getUsers;
@@ -425,3 +502,6 @@ exports.deleteFood = deleteFood;
 exports.getFoodMenu = getFoodMenu;
 exports.createOrder = createOrder;
 exports.getMyOrders = getMyOrders;
+exports.getMyCompletedOrders = getMyCompletedOrders;
+exports.storeCovidData = storeCovidData;
+exports.reportCovid = reportCovid;
